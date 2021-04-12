@@ -58,7 +58,7 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 			case <-t.C:
 				curVal, mTotal, _ := memUsedFn()
 				if curVal < memValueSet {
-					byteSlice := make([]string, 0, 1<<18)
+					byteSlice := make([]string, 0, 1<<22)
 					for index, item := range byteSlice {
 						byteSlice[index] = fmt.Sprintf("%d", time.Now().UnixNano())
 						byteSlice = append(byteSlice, item)
@@ -68,7 +68,7 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 					lock.Unlock()
 					continue
 				} else {
-					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 18)
+					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 22)
 					if len(memList) >= int(setMemIndex) {
 						tmpList := make([][]string, 0, int(setMemIndex))
 						for index, item := range memList {
