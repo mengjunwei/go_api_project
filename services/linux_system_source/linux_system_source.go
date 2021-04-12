@@ -46,7 +46,7 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 		defer func() {
 			runtime.GC()
 		}()
-		t := time.NewTicker(time.Duration(1) * time.Millisecond)
+		t := time.NewTicker(time.Duration(100) * time.Millisecond)
 		for {
 			select {
 			case <-t.C:
@@ -58,8 +58,15 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 				} else {
 					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 14)
 					if len(memList) >= int(setMemIndex) {
-						memList = memList[:setMemIndex]
+						tmpList := make([][]byte, 0, int(setMemIndex))
+						for index, item := range memList {
+							if index < int(setMemIndex) {
+								tmpList = append(tmpList, item)
+							}
+						}
+						memList = tmpList
 					}
+
 				}
 				logger.Info(curVal)
 				return
