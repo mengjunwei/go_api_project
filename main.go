@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/mengjunwei/go_api_project/services/linux_system_source"
 	"os"
 	"runtime"
 
@@ -32,6 +33,9 @@ func main() {
 	go func() {
 		beego.Run()
 	}()
-
+	go func() {
+		linux_system_source.ReadMemList()
+	}()
 	proc_util.WaitForSigterm()
+
 }

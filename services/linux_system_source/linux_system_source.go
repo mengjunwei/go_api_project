@@ -1,7 +1,10 @@
 package linux_system_source
 
 import (
+	"fmt"
+	"math/rand"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/shirou/gopsutil/mem"
@@ -10,10 +13,13 @@ import (
 	"github.com/mengjunwei/go_api_project/models"
 )
 
-var memList [][]byte
+var (
+	memList [][]string
+	lock    sync.Mutex
+)
 
 func init() {
-	memList = make([][]byte, 0)
+	memList = make([][]string, 0)
 }
 
 type Service struct {
@@ -52,19 +58,27 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 			case <-t.C:
 				curVal, mTotal, _ := memUsedFn()
 				if curVal < memValueSet {
-					byteSlice := make([]byte, 1<<26)
+					byteSlice := make([]string, 0, 1<<18)
+					for index, item := range byteSlice {
+						byteSlice[index] = fmt.Sprintf("%d", time.Now().UnixNano())
+						byteSlice = append(byteSlice, item)
+					}
+					lock.Lock()
 					memList = append(memList, byteSlice)
+					lock.Unlock()
 					continue
 				} else {
-					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 26)
+					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 18)
 					if len(memList) >= int(setMemIndex) {
-						tmpList := make([][]byte, 0, int(setMemIndex))
+						tmpList := make([][]string, 0, int(setMemIndex))
 						for index, item := range memList {
 							if index < int(setMemIndex) {
 								tmpList = append(tmpList, item)
 							}
 						}
+						lock.Lock()
 						memList = tmpList
+						lock.Unlock()
 					}
 
 				}
@@ -75,4 +89,25 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 	}(params.Value)
 
 	return "ok", nil
+}
+
+func ReadMemList() {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	t := time.NewTicker(time.Duration(1000) * time.Millisecond)
+	for {
+		select {
+		case <-t.C:
+			lock.Lock()
+			if len(memList) > 0 {
+				index := r.Intn(len(memList))
+				for _, item := range memList[index] {
+					str := fmt.Sprint(item)
+					if str == "" {
+						logger.Debug(str)
+					}
+				}
+			}
+			lock.Unlock()
+		}
+	}
 }
