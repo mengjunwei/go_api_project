@@ -52,11 +52,11 @@ func (s *Service) SetMemory(params *models.SystemSetDTO) (interface{}, error) {
 			case <-t.C:
 				curVal, mTotal, _ := memUsedFn()
 				if curVal < memValueSet {
-					byteSlice := make([]byte, 1<<16)
+					byteSlice := make([]byte, 1<<20)
 					memList = append(memList, byteSlice)
 					continue
 				} else {
-					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 16)
+					setMemIndex := mTotal * uint64(params.Value) / (100 * 1 << 20)
 					if len(memList) >= int(setMemIndex) {
 						tmpList := make([][]byte, 0, int(setMemIndex))
 						for index, item := range memList {
